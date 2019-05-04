@@ -8,7 +8,7 @@ CC     = gcc
 CFLAGS = -Wall -Wpedantic -std=c99 -g
 # modify the flags here ^
 EXE    = pw_cracker
-OBJ    = pw_cracker.o
+OBJ    = pw_cracker.o sha256.o
 # add any new object files here ^
 
 # top (default) target
@@ -19,7 +19,7 @@ $(EXE): $(OBJ)
 	$(CC) $(CFLAGS) -o $(EXE) $(OBJ)
 
 # other dependencies, what headers are included by these objects, e.g.
-# image_tagger.o: hashtbl.h list.h
+pw_cracker.o: sha256.h
 # hashtbl.o: strhash.h
 # ^ add any new dependencies here (for example if you add new modules)
 

@@ -8,57 +8,83 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
+#include "sha256.h"
 
 // bytes i.e. 32*8 chars
-#define PW_LEN_SHA256_BYTES 32
 #define PW4_FILE_LOC "./pwd4sha256"
 
-char* getPasswordAtIndex(int i, char* sha256_string);
-char* readFileIntoString(char*file_loc);
+
+void readFileIntoString(char* file_loc, BYTE hashed_pws[], size_t size);
+BYTE* generateHash(const BYTE *to_hash, BYTE hash[]);
 
 int main(int argc, char const *argv[]) {
 
+    // ====== * this works, testing
+    char pw[9] = "password";
+    BYTE hash[SHA256_BLOCK_SIZE];
+    generateHash(pw, hash);
+    // ===================
 
-    readFileIntoString(PW4_FILE_LOC);
-    // printf("%s", sha256_string);
 
+
+
+
+    // print as hex
+    //Source https://stackoverflow.com/questions/36381509/how-to-print-sha512-hash-in-c
+    for(int i = 0; i < SHA256_BLOCK_SIZE; ++i) {
+       printf("%02x", hash[i]);
+    }
+    printf("\n");
+
+    struct stat st;
+    stat(PW4_FILE_LOC, &st);
+    long size = st.st_size;
+    // int num_hashes_in_file = size / SHA256_BLOCK_SIZE;
+    BYTE pw4_hashes[size];
+    readFileIntoString(PW4_FILE_LOC, pw4_hashes, size);
+    printf("About to start printing pw4 hashes\n");
+    printf("0: ");
+    for(int i = 0; i < size; ++i) {
+        printf("%02x", pw4_hashes[i]);
+        if ((i+1)%(SHA256_BLOCK_SIZE) == 0) {
+            printf("\n%d: ", (i+1)/SHA256_BLOCK_SIZE);
+        }
+    }
+    printf("\n");
     // Begin cracking passwords... separate function
-
-    // getPasswordAtIndex(0, sha256_string);
 
 
     return 0;
 }
 
-// Gets a specific password from the list by index
-char* getPasswordAtIndex(int i, char* sha256_string) {
-    int start = i * PW_LEN_SHA256_BYTES;
-    int end = start + PW_LEN_SHA256_BYTES;
+//
+BYTE* generateHash(const BYTE *to_hash, BYTE hash[]) {
+    SHA256_CTX sha_ctx;
+    sha256_init(&sha_ctx);
+    sha256_update(&sha_ctx, to_hash, sizeof(to_hash));
+    sha256_final(&sha_ctx, hash);
 }
 
 
-char* readFileIntoString(char* file_loc) {
+void readFileIntoString(char* file_loc, BYTE hashed_pws[], size_t size) {
     FILE *fptr;
     char ch;
 
-    char* sha256_string = malloc(sizeof(char) * 320*8);
-
-
     /*  open the file for reading */
     fptr = fopen(file_loc, "r");
-    struct stat st;
-    stat(file_loc, &st);
-    long size = st.st_size;
-    printf("Size of file loc file: %ld\n", size);
+
     if (fptr == NULL) {
         printf("Cannot open file \n");
         exit(0);
     }
+    // BYTE hash[SHA256_BLOCK_SIZE];
+    fread(hashed_pws, size, 1, fptr);
 
-    // fwrite(sha256_string, 32, 10, fptr);
+
+
+
+    // fwrite(fptr, 32, 10, stdout);
     // printf(str_ptr);
 
     fclose(fptr);
-
-    return "no";
 }
