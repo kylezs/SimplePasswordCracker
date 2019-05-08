@@ -53,11 +53,19 @@ int main(int argc, char** argv)
   {
     printf("Doing maths\n");
     // g^b (mod p) = > g\nb ^ p
-    strcpy(msg, "2\n16^p\n9 % p\n");
-    sprintf("%d\n%d ^ p\n%d % p\n", G, 15);
+    // strcpy(msg, "2\n16^p\n9 % p\n");
+    sprintf(msg, "%d\n%d ^ p\n%d %% p\n", 2, G, P);
+    printf("%d\n%d ^ p\n%d\n", 2, G, P);
     write(outpipefd[1], msg, strlen(msg));
+    sleep(1);
     read(inpipefd[0], buf, 256);
-    printf("Received answer: %s\n", buf);
+    int len_buf = strlen(buf);
+    char num[3];
+    strncpy(num, &buf[len_buf-3], 2);
+    int ans = atoi(num);
+    printf("Received answer: %s, strlen buf: %lu\n", buf, strlen(buf));
+
+    printf("\nReceived answer, num: %d\n", ans);
   }
 
   kill(pid, SIGKILL); //send SIGKILL signal to the child process
