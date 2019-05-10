@@ -8,6 +8,7 @@
 
 #define P 97
 #define G 15
+#define DH_PATH "dh.c"
 
 int main(int argc, char** argv)
 {
@@ -15,8 +16,8 @@ int main(int argc, char** argv)
   int inpipefd[2];
   int outpipefd[2];
   char buf[256];
-  char msg[256];
   int status;
+  char command[100];
 
   pipe(inpipefd);
   pipe(outpipefd);
@@ -31,9 +32,7 @@ int main(int argc, char** argv)
     //ask kernel to deliver SIGTERM in case the parent dies
     // prctl(PR_SET_PDEATHSIG, SIGTERM);
 
-
-    //replace tee with your process
-    execl("/usr/bin/dc", "dc", (char *) NULL);
+    execl("/usr/bin/openssl", "openssl", (char *) NULL);
     // Nothing below this line should be executed by child process. If so,
     // it means that the execl function wasn't successfull, so lets exit:
     exit(1);
@@ -51,21 +50,17 @@ int main(int argc, char** argv)
   // Now, you can write to outpipefd[1] and read from inpipefd[0] :
   if (pid > 0)
   {
-    printf("Doing maths\n");
-    // g^b (mod p) = > g\nb ^ p
-    // strcpy(msg, "2\n16^p\n9 % p\n");
-    sprintf(msg, "%d\n%d ^ p\n%d %% p\n", 2, G, P);
-    printf("%d\n%d ^ p\n%d\n", 2, G, P);
-    write(outpipefd[1], msg, strlen(msg));
-    sleep(1);
+    printf("calcing hash\n");
+    sprintf(command, "sha256 %s\n", DH_PATH);
+    write(outpipefd[1], command, strlen(command));
+    sleep(4);
     read(inpipefd[0], buf, 256);
-    int len_buf = strlen(buf);
-    char num[3];
-    strncpy(num, &buf[len_buf-3], 2);
-    int ans = atoi(num);
-    printf("Received answer: %s, strlen buf: %lu\n", buf, strlen(buf));
-
-    printf("\nReceived answer, num: %d\n", ans);
+    char* hash = strstr(buf, "=");
+    hash += 3;
+    printf("The hash is %s\n", hash);
+    char first_byte = hash[0];
+    int first_byte_int = (int)strtol(&first_byte, NULL, 16);
+    printf("First byte int: %d\n", first_byte_int);
   }
 
   kill(pid, SIGKILL); //send SIGKILL signal to the child process
