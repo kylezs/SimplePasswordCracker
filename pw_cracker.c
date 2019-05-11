@@ -11,38 +11,62 @@
 #include <sys/stat.h>
 #include "sha256.h"
 
-// bytes i.e. 32*8 chars
 #define PW4_FILE_LOC "./pwd4sha256"
 
+#define PW6_FILE_LOC "./pwd6sha256"
 
-void readFileIntoString(char* file_loc, BYTE hashed_pws[], size_t size);
+
+
+void readFileIntoString(const char* file_loc, BYTE hashed_pws[], size_t size);
 void generateHash(const BYTE *to_hash, BYTE hash[]);
 void printPWListAsHex(BYTE pw_hashes[], size_t size);
 int pwEqualToListAt(char *guess, BYTE pw_hashes[], size_t size);
-void crackPasswords(BYTE hashed_pws[], size_t size);
+void crackPasswordsFromFile(const char* guess_file, const char* hashed_file);
+void generateNGuesses(int n);
 
 // Password generation functions
 void allNDigitNums(int n, BYTE hashed_pws[], size_t size);
 
+// 0 arg: generate guesses and test them against sha256 hashes
+// 1 arg: int: how many guesses to produce, don't compare to hashes
+// 2 arg: 1. file of password guesses, 2. file w/ list of sha256 hashes
 int main(int argc, char const *argv[]) {
 
-    struct stat st;
-    stat(PW4_FILE_LOC, &st);
-    long size = st.st_size;
-    // int num_hashes_in_file = size / SHA256_BLOCK_SIZE;
-    BYTE pw4_hashes[size];
-    readFileIntoString(PW4_FILE_LOC, pw4_hashes, size);
-
-
-    // Begin cracking passwords... separate function
-    crackPasswords(pw4_hashes, size);
+    int n_guesses;
+    if (argc == 1) {
+        // generate and guess, guess against what !!!!?????
+        printf("No args supplied. Try crack passwords\n");
+    } else if (argc == 2) {
+        n_guesses = atoi(argv[1]);
+        printf("1 arg supplied. Generate %d passwords\n", n_guesses);
+        // generate n guesses
+        generateNGuesses(n_guesses);
+    } else if(argc == 3) {
+        printf("2 arg supplied. Compare list of passwords to hashed ones\n");
+        crackPasswordsFromFile(argv[1], argv[2]);
+    }//
 
     return 0;
 }
 
-void crackPasswords(BYTE hashed_pws[], size_t size) {
-    allNDigitNums(4, hashed_pws, size);
-    allNDigitNums(6, hashed_pws, size);
+// prints n guesses to stdout
+void generateNGuesses(int n) {
+    printf("Printing %d guesses\n", n);
+    // tracks current guess number in all subfunctions
+    int curr_guess = 0;
+    printf("The current guess is: %d\n", curr_guess);
+}
+
+// two argument form
+void crackPasswordsFromFile(const char* guess_file, const char* hashed_file) {
+    struct stat st;
+    stat(hashed_file, &st);
+    long size = st.st_size;
+    // int num_hashes_in_file = size / SHA256_BLOCK_SIZE;
+    BYTE pw_hashes[size];
+    readFileIntoString(hashed_file, pw_hashes, size);
+    printf("crack passwords from file, print the hashed file\n");
+    printPWListAsHex(pw_hashes, size);
 }
 
 void allNDigitNums(int n, BYTE hashed_pws[], size_t size) {
@@ -118,7 +142,7 @@ void generateHash(const BYTE *to_hash, BYTE hash[]) {
 }
 
 
-void readFileIntoString(char* file_loc, BYTE hashed_pws[], size_t size) {
+void readFileIntoString(const char* file_loc, BYTE hashed_pws[], size_t size) {
     FILE *fptr;
 
     /*  open the file for reading */

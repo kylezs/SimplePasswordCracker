@@ -7,7 +7,7 @@
 CC     = gcc
 CFLAGS = -Wall -Wpedantic -std=c99 -g
 # modify the flags here ^
-EXE    = pw_cracker
+EXE    = crack
 OBJ    = pw_cracker.o sha256.o
 # add any new object files here ^
 

@@ -23,7 +23,6 @@ int setup_client_socket(const int port, const char* server_name,
 
 int first_byte();
 int calc_gbmodp(int b);
-int calc_gbamodp(int gamodp, int first_byte_int);
 
 int main(int argc, char* argv[]) {
 	struct sockaddr_in serv_addr;
@@ -40,6 +39,8 @@ int main(int argc, char* argv[]) {
 	port = atoi(argv[2]);
 	server = argv[1];
 
+    int i=0;
+    while (1) {
 	/* Make connection */
 	sockfd = setup_client_socket(port, server, &serv_addr);
 	if (connect(sockfd, (struct sockaddr*)&serv_addr, sizeof(serv_addr)) <
@@ -57,7 +58,8 @@ int main(int argc, char* argv[]) {
 
     // Send gbmodp
     printf("Calcing hash\n");
-    int first_byte_int = first_byte();
+    // int first_byte_int = first_byte();
+    int first_byte_int = i;
     int first_send = calc_gbmodp(first_byte_int);
     printf("first send: %d, first byte: %d\n", first_send, first_byte_int);
     memset(buffer, '\0', sizeof(buffer));
@@ -81,7 +83,7 @@ int main(int argc, char* argv[]) {
     int serv_response_num = atoi(buffer);
 
     printf("From server g^((b)a) modp(int): %d\n", serv_response_num);
-    int second_send = calc_gbamodp(serv_response_num, first_byte_int);
+    int second_send = calc_gbmodp(serv_response_num);
 
     memset(buffer, '\0', sizeof(buffer));
 
@@ -104,8 +106,9 @@ int main(int argc, char* argv[]) {
     printf("From server, status: %s\n", buffer);
 
 	/* Close to let server know that we've finished sending our message */
+    i++;
 	close(sockfd);
-
+    }
 }
 
 /* Create and return a socket bound to the given port and server */
@@ -180,7 +183,7 @@ int first_byte() {
       sleep(4);
       read(inpipefd[0], buf, 256);
       char* hash = strstr(buf, "=");
-      hash += 2;
+      hash += 3;
       printf("Full hash: %s\n", hash);
       printf("End hash\n");
       char first_byte[2];
@@ -192,68 +195,6 @@ int first_byte() {
     waitpid(pid, &status, 0);
     printf("First byte int just before return: %d\n", first_byte_int);
     return first_byte_int;
-}
-
-int calc_gbamodp(int gamodp, int first_byte_int) {
-    pid_t pid = 0;
-    int inpipefd[2];
-    int outpipefd[2];
-    char buf[256];
-    char msg[256];
-    int status;
-
-    pipe(inpipefd);
-    pipe(outpipefd);
-    pid = fork();
-    if (pid == 0)
-    {
-      // Child
-      dup2(outpipefd[0], STDIN_FILENO);
-      dup2(inpipefd[1], STDOUT_FILENO);
-      dup2(inpipefd[1], STDERR_FILENO);
-
-      //ask kernel to deliver SIGTERM in case the parent dies
-      // prctl(PR_SET_PDEATHSIG, SIGTERM);
-
-
-      //replace tee with your process
-      execl("/usr/bin/dc", "dc", (char *) NULL);
-      // Nothing below this line should be executed by child process. If so,
-      // it means that the execl function wasn't successfull, so lets exit:
-      exit(1);
-    }
-    // The code below will be executed only by parent. You can write and read
-    // from the child using pipefd descriptors, and you can send signals to
-    // the process using its pid by kill() function. If the child process will
-    // exit unexpectedly, the parent process will obtain SIGCHLD signal that
-    // can be handled (e.g. you can respawn the child process).
-
-    //close unused pipe ends
-    close(outpipefd[0]);
-    close(inpipefd[1]);
-
-    // Now, you can write to outpipefd[1] and read from inpipefd[0] :
-    int ans = -1;
-    if (pid > 0)
-    {
-        // g^b (mod p) = > g\nb ^ p
-        // strcpy(msg, "2\n16^p\n9 % p\n");
-        sprintf(msg, "%d\n%d ^ p\n%d %% p\n", gamodp, first_byte_int, P);
-        write(outpipefd[1], msg, strlen(msg));
-        sleep(1);
-        memset(buf, '\0', 256);
-        read(inpipefd[0], buf, 256);
-        printf("The buf next line:\n%s\n", buf);
-        int len_buf = strlen(buf);
-        char num[3];
-        strncpy(num, &buf[len_buf-3], 3);
-        ans = atoi(num);
-    }
-
-    kill(pid, SIGKILL); //send SIGKILL signal to the child process
-    waitpid(pid, &status, 0);
-    printf("2nd ans just before return %d\n", ans);
-    return ans;
 }
 
 int calc_gbmodp(int b) {
@@ -305,7 +246,6 @@ int calc_gbmodp(int b) {
         sleep(1);
         memset(buf, '\0', 256);
         read(inpipefd[0], buf, 256);
-        printf("The buf next line:\n%s\n", buf);
         int len_buf = strlen(buf);
         char num[3];
         strncpy(num, &buf[len_buf-3], 3);
