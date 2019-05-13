@@ -1,4 +1,11 @@
-/* Client for 5.2 */
+/**
+* Used to do a brute force attack on the dh server to get the passwords early.
+Hehe. I did it properly in dh.c.
+The actual purpose of brute forcing was to debug. 
+
+*/
+
+
 #include <fcntl.h>
 #include <netdb.h>
 #include <netinet/in.h>

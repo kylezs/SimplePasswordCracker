@@ -1,4 +1,9 @@
-/* Client for 5.2 */
+/*
+* Completes a diffie hellman key exchange using the first byte of the hash
+* of itself as "a"
+* Much of the pipe and exec code was sourced from: https://stackoverflow.com/a/6172578
+* Author: Kyle Zsembery
+*/
 #include <fcntl.h>
 #include <netdb.h>
 #include <netinet/in.h>
@@ -9,8 +14,8 @@
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <unistd.h>
-#include<sys/wait.h>
-#include<signal.h>
+#include <sys/wait.h>
+#include <signal.h>
 #include <stdbool.h>
 
 #define USERNAME "kzsembery\n"
