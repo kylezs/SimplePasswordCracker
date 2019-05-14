@@ -130,16 +130,47 @@ void bruteForce4CharAlpha(bool crack, BYTE pw_hashes[], size_t pw_size, int n, i
     }
 }
 
-// void bruteForce4CharAlpha(bool crack, BYTE pw_hashes[], size_t pw_size, int n, int *curr_guess) {
-//     int c1 = c2 = c3 = c4 = 65
-//     while (c1 < 123) {
-//         if (c1 > 90 && c1 < 97) {
-//             break;
-//         }
-//
-//         c1++;
-//     }
-// }
+void bruteForce6CharAlpha(bool crack, BYTE pw_hashes[], size_t pw_size, int n, int *curr_guess) {
+    int c1, c2, c3, c4, c5, c6;
+    for (c1 = 65; c1<123; c1++) {
+        if (c1 > 90 && c1 < 97) {
+            continue;
+        }
+        for (c2 = 65; c2<123; c2++) {
+            if (c2 > 90 && c2 < 97) {
+                continue;
+            }
+            for (c3 = 65; c3<123; c3++) {
+                if (c3 > 90 && c3 < 97) {
+                    continue;
+                }
+                for (c4 = 65; c4<123; c4++) {
+                    if (c4 > 90 && c4 < 97) {
+                        continue;
+                    }
+                    for (c4 = 65; c4<123; c4++) {
+                        if (c4 > 90 && c4 < 97) {
+                            continue;
+                        }
+                        for (c4 = 65; c4<123; c4++) {
+                            if (c4 > 90 && c4 < 97) {
+                                continue;
+                            }
+                            if (*curr_guess < n) {
+                                printf("%c%c%c%c%c%c\n", c1, c2, c3, c4, c5, c6);
+                                *curr_guess += 1;
+                            } else if (n == -1 && crack) {
+                                char str[7];
+                                sprintf(str, "%c%c%c%c%c%c", c1, c2, c3, c4, c5, c6);
+                                pwEqualToListAt(str, pw_hashes, pw_size);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
 
 // void generate6CharPasswords(bool crack, int n, BYTE pw_hashes[], size_t pw_size) {
 //     // tracks current guess number in all subfunctions
