@@ -11,7 +11,7 @@
 #include <sys/stat.h>
 #include "sha256.h"
 
-#define CHAR_PWS_TESTED 4
+#define CHAR_PWS_TESTED 6
 #define PW4_FILE_LOC "./pwd4sha256"
 #define PW6_FILE_LOC "./pwd6sha256"
 
@@ -24,6 +24,7 @@ void crackPasswordsFromFile(const char* guess_file, const char* hashed_file);
 void generatePasswords(bool crack, int n, BYTE pw_hashes[], size_t pw_size);
 
 void generate4CharPasswords(bool crack, int n, BYTE pw_hashes[], size_t pw_size);
+void generate6CharPasswords(bool crack, int n, BYTE pw_hashes[], size_t pw_size);
 
 // Password generation functions/strategies
 /*
@@ -36,7 +37,7 @@ void nDigitNums(bool crack, BYTE pw_hashes[], size_t pw_size, int n, int *curr_g
 void bruteForce4CharAlpha(bool crack, BYTE pw_hashes[], size_t pw_size, int n, int *curr_guess);
 
 // 6 char
-
+void bruteForce6CharAlpha(bool crack, BYTE pw_hashes[], size_t pw_size, int n, int *curr_guess);
 
 // 0 arg: generate guesses and test them against sha256 hashes
 // 1 arg: int: how many guesses to produce, don't compare to hashes
@@ -80,7 +81,7 @@ void generatePasswords(bool crack, int n, BYTE pw_hashes[], size_t pw_size) {
         generate4CharPasswords(crack, n, pw_hashes, pw_size);
     } else if (CHAR_PWS_TESTED == 6) {
         printf("6 character passwords being generated\n");
-        // generate6CharPasswords(crack, n, pw_hashes, pw_size);
+        generate6CharPasswords(crack, n, pw_hashes, pw_size);
     } else {
         printf("Invalid value set for CHAR_PWS_TESTED\n");
     }
@@ -93,6 +94,14 @@ void generate4CharPasswords(bool crack, int n, BYTE pw_hashes[], size_t pw_size)
     nDigitNums(crack, pw_hashes, pw_size, n, &curr_guess);
     bruteForce4CharAlpha(crack, pw_hashes, pw_size, n, &curr_guess);
     // All 4 char password generation strategies
+}
+
+void generate6CharPasswords(bool crack, int n, BYTE pw_hashes[], size_t pw_size) {
+    // tracks current guess number in all subfunctions
+    int curr_guess = 0;
+    printf("Generating %d 6 char passwords, cracking? %d\n", n, crack);
+    // All 6 char password generation strategies
+    bruteForce6CharAlpha(crack, pw_hashes, pw_size, n, &curr_guess);
 }
 
 /* Brute force generate all passwords with alphabetic characters.
@@ -172,12 +181,7 @@ void bruteForce6CharAlpha(bool crack, BYTE pw_hashes[], size_t pw_size, int n, i
     }
 }
 
-// void generate6CharPasswords(bool crack, int n, BYTE pw_hashes[], size_t pw_size) {
-//     // tracks current guess number in all subfunctions
-//     int curr_guess = 0;
-//     printf("Generating %d 6 char passwords, cracking? %d\n", n, crack);
-//     // All 6 char password generation strategies
-// }
+
 
 void nDigitNums(bool crack, BYTE pw_hashes[], size_t pw_size, int n, int *curr_guess) {
     int i=0;
