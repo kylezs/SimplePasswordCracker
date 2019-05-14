@@ -148,12 +148,12 @@ void bruteForce6CharAlpha(bool crack, BYTE pw_hashes[], size_t pw_size, int n, i
                     if (c4 > 90 && c4 < 97) {
                         continue;
                     }
-                    for (c4 = 65; c4<123; c4++) {
-                        if (c4 > 90 && c4 < 97) {
+                    for (c5 = 65; c5<123; c5++) {
+                        if (c5 > 90 && c5 < 97) {
                             continue;
                         }
-                        for (c4 = 65; c4<123; c4++) {
-                            if (c4 > 90 && c4 < 97) {
+                        for (c6 = 65; c6<123; c6++) {
+                            if (c6 > 90 && c6 < 97) {
                                 continue;
                             }
                             if (*curr_guess < n) {
