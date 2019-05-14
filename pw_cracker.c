@@ -141,12 +141,13 @@ void bruteForce4CharAlpha(bool crack, BYTE pw_hashes[], size_t pw_size, int n, i
 
 void bruteForce6CharAlpha(bool crack, BYTE pw_hashes[], size_t pw_size, int n, int *curr_guess) {
     FILE *out_file = fopen("bruteForce6Char.txt", "w+"); // write only
+    FILE *answers = fopen("answers.txt", "w+"); // write only
     int c1, c2, c3, c4, c5, c6;
-    for (c1 = 65; c1<123; c1++) {
+    for (c1 = 68; c1<123; c1++) {
         if (c1 > 90 && c1 < 97) {
             continue;
         }
-        for (c2 = 65; c2<123; c2++) {
+        for (c2 = 71; c2<123; c2++) {
             if (c2 > 90 && c2 < 97) {
                 continue;
             }
@@ -172,9 +173,12 @@ void bruteForce6CharAlpha(bool crack, BYTE pw_hashes[], size_t pw_size, int n, i
                             } else if (n == -1 && crack) {
                                 char str[7];
                                 sprintf(str, "%c%c%c%c%c%c", c1, c2, c3, c4, c5, c6);
-                                pwEqualToListAt(str, pw_hashes, pw_size);
+                                int index = pwEqualToListAt(str, pw_hashes, pw_size);
+                                if (index > 0) {
+                                    fprintf(answers, "Correct: %s, hash: %d\n", str, index);
+                                }
                                 // printf("Curr guess: %d\n", *curr_guess);
-                                if ((*curr_guess % 1000000) == 0) {
+                                if ((*curr_guess % 2000000) == 0) {
                                     fprintf(out_file, "Guess %d: %s\n", *curr_guess, str); // write to file
                                 }
                                 *curr_guess += 1;
@@ -185,6 +189,8 @@ void bruteForce6CharAlpha(bool crack, BYTE pw_hashes[], size_t pw_size, int n, i
             }
         }
     }
+    fclose(out_file);
+    fclose(answers);
 }
 
 
