@@ -143,11 +143,11 @@ void bruteForce6CharAlpha(bool crack, BYTE pw_hashes[], size_t pw_size, int n, i
     FILE *out_file = fopen("bruteForce6Char.txt", "w+"); // write only
     FILE *answers = fopen("answers.txt", "w+"); // write only
     int c1, c2, c3, c4, c5, c6;
-    for (c1 = 68; c1<123; c1++) {
+    for (c1 = 73; c1<123; c1++) {
         if (c1 > 90 && c1 < 97) {
             continue;
         }
-        for (c2 = 71; c2<123; c2++) {
+        for (c2 = 121; c2<123; c2++) {
             if (c2 > 90 && c2 < 97) {
                 continue;
             }
@@ -178,7 +178,7 @@ void bruteForce6CharAlpha(bool crack, BYTE pw_hashes[], size_t pw_size, int n, i
                                     fprintf(answers, "Correct: %s, hash: %d\n", str, index);
                                 }
                                 // printf("Curr guess: %d\n", *curr_guess);
-                                if ((*curr_guess % 2000000) == 0) {
+                                if ((*curr_guess % 3000000) == 0) {
                                     fprintf(out_file, "Guess %d: %s\n", *curr_guess, str); // write to file
                                 }
                                 *curr_guess += 1;
