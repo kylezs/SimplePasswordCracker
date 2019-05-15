@@ -69,7 +69,6 @@ int main(int argc, char const *argv[]) {
         printf("2 arg supplied. Compare list of passwords to hashed ones\n");
         crackPasswordsFromFile(argv[1], argv[2]);
     }
-
     return 0;
 }
 
@@ -139,11 +138,12 @@ void bruteForce4CharAlpha(bool crack, BYTE pw_hashes[], size_t pw_size, int n, i
     }
 }
 
+/* */
 void bruteForce6CharAlpha(bool crack, BYTE pw_hashes[], size_t pw_size, int n, int *curr_guess) {
     FILE *out_file = fopen("bruteForce6Char.txt", "w+"); // write only
     FILE *answers = fopen("answers.txt", "w+"); // write only
     int c1, c2, c3, c4, c5, c6;
-    for (c1 = 80; c1<123; c1++) {
+    for (c1 = 85; c1<123; c1++) {
         if (c1 > 90 && c1 < 97) {
             continue;
         }
@@ -193,8 +193,6 @@ void bruteForce6CharAlpha(bool crack, BYTE pw_hashes[], size_t pw_size, int n, i
     fclose(answers);
 }
 
-
-
 void nDigitNums(bool crack, BYTE pw_hashes[], size_t pw_size, int n, int *curr_guess) {
     int i=0;
     while (i<pow(10, CHAR_PWS_TESTED) && (*curr_guess < n || n == -1)) {
@@ -222,18 +220,28 @@ void nDigitNums(bool crack, BYTE pw_hashes[], size_t pw_size, int n, int *curr_g
     }
 }
 
-
-
-// two argument form
+// Two command line arguments, this is called.
 void crackPasswordsFromFile(const char* guess_file, const char* hashed_file) {
     struct stat st;
     stat(hashed_file, &st);
-    long size = st.st_size;
+    long pw_size = st.st_size;
     // int num_hashes_in_file = size / SHA256_BLOCK_SIZE;
-    BYTE pw_hashes[size];
-    readFileIntoString(hashed_file, pw_hashes, size);
-    printf("crack passwords from file, print the hashed file\n");
-    printPWListAsHex(pw_hashes, size);
+    BYTE pw_hashes[pw_size];
+    readFileIntoString(hashed_file, pw_hashes, pw_size);
+    FILE *guesses_fp = fopen(guess_file, "r");
+    if (guesses_fp == NULL){
+      printf("Could not open file %s", guess_file);
+      exit(1);
+    }
+    // loop through guesses, comparing each to the hashes
+    char guess_raw[50];
+    while (fgets(guess_raw, 50, guesses_fp) != NULL) {
+        int len_guess = strlen(guess_raw);
+        guess_raw[len_guess-1] = '\0';
+        char guess[len_guess];
+        sprintf(guess, "%s", guess_raw);
+        pwEqualToListAt(guess, pw_hashes, pw_size);
+    }
 }
 
 /*
