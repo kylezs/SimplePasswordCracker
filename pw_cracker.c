@@ -143,7 +143,7 @@ void bruteForce6CharAlpha(bool crack, BYTE pw_hashes[], size_t pw_size, int n, i
     FILE *out_file = fopen("bruteForce6Char.txt", "w+"); // write only
     FILE *answers = fopen("answers.txt", "w+"); // write only
     int c1, c2, c3, c4, c5, c6;
-    for (c1 = 85; c1<123; c1++) {
+    for (c1 = 87; c1<123; c1++) {
         if (c1 > 90 && c1 < 97) {
             continue;
         }
