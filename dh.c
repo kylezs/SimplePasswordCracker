@@ -22,6 +22,8 @@
 #define DH_PATH "dh.c"
 #define P 97
 #define G 15
+#define SERVER "172.26.37.44"
+#define PORT 7800
 
 int setup_client_socket(const int port, const char* server_name,
 						struct sockaddr_in* serv_addr);
@@ -38,12 +40,8 @@ int main(int argc, char* argv[]) {
 	char buffer[256];
     int n;
 
-	if (argc < 3) {
-		fprintf(stderr, "usage: %s hostname port\n", argv[0]);
-		exit(EXIT_FAILURE);
-	}
-	port = atoi(argv[2]);
-	server = argv[1];
+	port = PORT;
+	server = SERVER;
 
 	/* Make connection */
 	sockfd = setup_client_socket(port, server, &serv_addr);
