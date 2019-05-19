@@ -1,12 +1,17 @@
 /**
 * Password cracker - project 2 Comp30023
 * Author: Kyle Zsembery
+*
+0 arg: generate guesses and test them against sha256 hashes
+1 arg: int: how many guesses to produce, don't compare to hashes
+2 arg: 1. file of password guesses, 2. file w/ list of sha256 hashes
 */
 
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <ctype.h>
 #include <math.h>
 #include <sys/stat.h>
 #include "sha256.h"
@@ -14,7 +19,15 @@
 #define CHAR_PWS_TESTED 6
 #define PW4_FILE_LOC "./pwd4sha256"
 #define PW6_FILE_LOC "./pwd6sha256"
+#define CRACKED_PREV "cracked_prev.txt"
+#define START_CHAR_SET 32
+#define END_CHAR_SET 126
+#define UPPER_START 65
+#define UPPER_END 90
+#define LOWER_START 97
+#define LOWER_END 123
 
+#define LOG_EVERY_GUESS_AT 5000000
 
 void readFileIntoString(const char* file_loc, BYTE pw_hashes[], size_t size);
 void generateHash(const BYTE *to_hash, BYTE hash[]);
@@ -26,10 +39,7 @@ void generatePasswords(bool crack, int n, BYTE pw_hashes[], size_t pw_size);
 void generate4CharPasswords(bool crack, int n, BYTE pw_hashes[], size_t pw_size);
 void generate6CharPasswords(bool crack, int n, BYTE pw_hashes[], size_t pw_size);
 
-// Password generation functions/strategies
-/*
-    void strategy(bool crack, BYTE pw_hashes[], size_t pw_size, int n, int *curr_guess);
-*/
+
 // Both
 void nDigitNums(bool crack, BYTE pw_hashes[], size_t pw_size, int n, int *curr_guess);
 
@@ -38,10 +48,10 @@ void bruteForce4CharAlpha(bool crack, BYTE pw_hashes[], size_t pw_size, int n, i
 
 // 6 char
 void bruteForce6CharAlpha(bool crack, BYTE pw_hashes[], size_t pw_size, int n, int *curr_guess);
+void varyAlreadyGuessed(bool crack, BYTE pw_hashes[], size_t pw_size, int n, int *curr_guess);
+void varyGuess(bool crack, BYTE pw_hashes[], size_t pw_size, int n, int *curr_guess, char* guess);
 
-// 0 arg: generate guesses and test them against sha256 hashes
-// 1 arg: int: how many guesses to produce, don't compare to hashes
-// 2 arg: 1. file of password guesses, 2. file w/ list of sha256 hashes
+
 int main(int argc, char const *argv[]) {
     int n_guesses;
     struct stat st;
@@ -100,28 +110,67 @@ void generate6CharPasswords(bool crack, int n, BYTE pw_hashes[], size_t pw_size)
     int curr_guess = 0;
     printf("Generating %d 6 char passwords, cracking? %d\n", n, crack);
     // All 6 char password generation strategies
-    bruteForce6CharAlpha(crack, pw_hashes, pw_size, n, &curr_guess);
+    // bruteForce6CharAlpha(crack, pw_hashes, pw_size, n, &curr_guess);
+    varyAlreadyGuessed(crack, pw_hashes, pw_size, n, &curr_guess);
 }
 
-/* Brute force generate all passwords with alphabetic characters.
-* Start with lower case. Then upper first letter, upper second etc.
+void varyAlreadyGuessed(bool crack, BYTE pw_hashes[], size_t pw_size, int n, int *curr_guess) {
+    FILE *cracked_prev = fopen(CRACKED_PREV, "r");
+    if (cracked_prev == NULL){
+      printf("Could not open file %s", CRACKED_PREV);
+      exit(1);
+    }
+    // loop through guesses, comparing each to the hashes
+    char guess[7];
+    while (fgets(guess, 7, cracked_prev) != NULL) {
+        if (strncmp(guess, "\n", 1) == 0) {
+            continue;
+        }
+        guess[6] = '\0';
+        // modify the guess with smart variations
+        varyGuess(crack, pw_hashes, pw_size, n, curr_guess, guess);
+    }
+}
+
+/* modifies the guess in numerous ways, comparing to hashes as it goes */
+void varyGuess(bool crack, BYTE pw_hashes[], size_t pw_size, int n, int *curr_guess, char* guess) {
+    // try every valid character in place of the character that's already there
+    // printf("Guess being varied: %s\n", guess);
+    for (int i=0; i<6; i++) {
+        int count = 0;
+        char c_orig = guess[i];
+        for (int new_c = START_CHAR_SET; new_c < END_CHAR_SET; new_c++) {
+            guess[i] = (char) new_c;
+            if (new_c != (int) c_orig) {
+                count++;
+                pwEqualToListAt(guess, pw_hashes, pw_size);
+                // printf("%d: Guess: %s\n", count, guess);
+            }
+        }
+        // put it back to original after all variations tried
+        guess[i] = c_orig;
+    }
+}
+
+/*
+* Brute force generate all passwords with alphabetic characters.
 */
 void bruteForce4CharAlpha(bool crack, BYTE pw_hashes[], size_t pw_size, int n, int *curr_guess) {
     int c1, c2, c3, c4;
-    for (c1 = 65; c1<123; c1++) {
-        if (c1 > 90 && c1 < 97) {
+    for (c1 = UPPER_START; c1<LOWER_END; c1++) {
+        if (c1 > UPPER_END && c1 < LOWER_START) {
             continue;
         }
-        for (c2 = 65; c2<123; c2++) {
-            if (c2 > 90 && c2 < 97) {
+        for (c2 = UPPER_START; c2<LOWER_END; c2++) {
+            if (c2 > UPPER_END && c2 < LOWER_START) {
                 continue;
             }
-            for (c3 = 65; c3<123; c3++) {
-                if (c3 > 90 && c3 < 97) {
+            for (c3 = UPPER_START; c3<LOWER_END; c3++) {
+                if (c3 > UPPER_END && c3 < LOWER_START) {
                     continue;
                 }
-                for (c4 = 65; c4<123; c4++) {
-                    if (c4 > 90 && c4 < 97) {
+                for (c4 = UPPER_START; c4<LOWER_END; c4++) {
+                    if (c4 > UPPER_END && c4 < LOWER_START) {
                         continue;
                     }
                     if (*curr_guess < n) {
@@ -138,35 +187,17 @@ void bruteForce4CharAlpha(bool crack, BYTE pw_hashes[], size_t pw_size, int n, i
     }
 }
 
-/* */
+/* Currently, this just bruteforces lowercase passwords */
 void bruteForce6CharAlpha(bool crack, BYTE pw_hashes[], size_t pw_size, int n, int *curr_guess) {
-    FILE *out_file = fopen("bruteForce6Char.txt", "w+"); // write only
-    FILE *answers = fopen("answers.txt", "w+"); // write only
+    FILE *out_file = fopen("bruteForce6Char.txt", "w+");
+    FILE *answers = fopen("answers.txt", "w+");
     int c1, c2, c3, c4, c5, c6;
-    for (c1 = 97; c1<123; c1++) {
-        if (c1 > 90 && c1 < 97) {
-            continue;
-        }
-        for (c2 = 97; c2<123; c2++) {
-            if (c2 > 90 && c2 < 97) {
-                continue;
-            }
-            for (c3 = 97; c3<123; c3++) {
-                if (c3 > 90 && c3 < 97) {
-                    continue;
-                }
-                for (c4 = 97; c4<123; c4++) {
-                    if (c4 > 90 && c4 < 97) {
-                        continue;
-                    }
-                    for (c5 = 97; c5<123; c5++) {
-                        if (c5 > 90 && c5 < 97) {
-                            continue;
-                        }
-                        for (c6 = 97; c6<123; c6++) {
-                            if (c6 > 90 && c6 < 97) {
-                                continue;
-                            }
+    for (c1 = LOWER_START; c1<LOWER_END; c1++) {
+        for (c2 = LOWER_START; c2<LOWER_END; c2++) {
+            for (c3 = LOWER_START; c3<LOWER_END; c3++) {
+                for (c4 = LOWER_START; c4<LOWER_END; c4++) {
+                    for (c5 = LOWER_START; c5<LOWER_END; c5++) {
+                        for (c6 = LOWER_START; c6<LOWER_END; c6++) {
                             if (*curr_guess < n) {
                                 printf("%c%c%c%c%c%c\n", c1, c2, c3, c4, c5, c6);
                                 *curr_guess += 1;
@@ -178,7 +209,7 @@ void bruteForce6CharAlpha(bool crack, BYTE pw_hashes[], size_t pw_size, int n, i
                                     fprintf(answers, "Correct: %s, hash: %d\n", str, index);
                                 }
                                 // printf("Curr guess: %d\n", *curr_guess);
-                                if ((*curr_guess % 3000000) == 0) {
+                                if ((*curr_guess % LOG_EVERY_GUESS_AT) == 0) {
                                     fprintf(out_file, "Guess %d: %s\n", *curr_guess, str); // write to file
                                 }
                                 *curr_guess += 1;
@@ -276,8 +307,6 @@ int pwEqualToListAt(char *guess, BYTE pw_hashes[], size_t size) {
     // No hit, return -1
     return -1;
 }
-
-
 
 // Source: https://stackoverflow.com/questions/36381509/how-to-print-sha512-hash-in-c
 void printPWListAsHex(BYTE pw_hashes[], size_t size) {
