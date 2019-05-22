@@ -20,6 +20,9 @@
 #define PW4_FILE_LOC "./pwd4sha256"
 #define PW6_FILE_LOC "./pwd6sha256"
 #define CRACKED_PREV "cracked_prev.txt"
+#define COMMON_PWS "proj-2_common_passwords.txt"
+// #define COMMON_PWS "testpw.txt"
+
 #define START_CHAR_SET 32
 #define END_CHAR_SET 126
 #define UPPER_START 65
@@ -49,6 +52,7 @@ void bruteForce4CharAlpha(bool crack, BYTE pw_hashes[], size_t pw_size, int n, i
 // 6 char
 void bruteForce6CharAlpha(bool crack, BYTE pw_hashes[], size_t pw_size, int n, int *curr_guess);
 void varyAlreadyGuessed(bool crack, BYTE pw_hashes[], size_t pw_size, int n, int *curr_guess);
+void varyCommonPasswords(bool crack, BYTE pw_hashes[], size_t pw_size, int n, int *curr_guess);
 void varyGuess(bool crack, BYTE pw_hashes[], size_t pw_size, int n, int *curr_guess, char* guess);
 
 
@@ -110,10 +114,14 @@ void generate6CharPasswords(bool crack, int n, BYTE pw_hashes[], size_t pw_size)
     int curr_guess = 0;
     printf("Generating %d 6 char passwords, cracking? %d\n", n, crack);
     // All 6 char password generation strategies
-    // bruteForce6CharAlpha(crack, pw_hashes, pw_size, n, &curr_guess);
+
+    varyCommonPasswords(crack, pw_hashes, pw_size, n, &curr_guess);
+    bruteForce6CharAlpha(crack, pw_hashes, pw_size, n, &curr_guess);
     varyAlreadyGuessed(crack, pw_hashes, pw_size, n, &curr_guess);
+
 }
 
+/* only takes 6 letter guesses in CRACKED_PREV */
 void varyAlreadyGuessed(bool crack, BYTE pw_hashes[], size_t pw_size, int n, int *curr_guess) {
     FILE *cracked_prev = fopen(CRACKED_PREV, "r");
     if (cracked_prev == NULL){
@@ -132,6 +140,60 @@ void varyAlreadyGuessed(bool crack, BYTE pw_hashes[], size_t pw_size, int n, int
     }
 }
 
+void varyCommonPasswords(bool crack, BYTE pw_hashes[], size_t pw_size, int n, int *curr_guess) {
+    printf("Varying common passwords\n");
+    FILE *common_pws = fopen(COMMON_PWS, "r");
+    if (common_pws == NULL){
+      printf("Could not open file %s", COMMON_PWS);
+      exit(1);
+    }
+    // loop through guesses, comparing each to the hashes
+    char guess_raw[50];
+    while (fgets(guess_raw, sizeof(guess_raw), common_pws) != NULL) {
+        if (strncmp(guess_raw, "\n", 1) == 0) {
+            continue;
+        }
+        // stop newline from being counted as a char in the string
+        int len_guess = strlen(guess_raw);
+        if (guess_raw[len_guess-1] == '\n') {
+            guess_raw[len_guess-1] = '\0';
+        }
+        len_guess = strlen(guess_raw);
+
+        char guess[7];
+        if (len_guess<6) {
+            // pad the word at different parts if shorter than 6 chars
+            char* c_point;
+            // controls number of variations on padding
+            for (int j=0; j<7-len_guess; j++) {
+                c_point = &guess[j];
+                // add paddings. Add 0 to end, and just leave first letter
+                // while moving across
+                if (j==0) {
+                    for (int c_num=len_guess-1; c_num<6; c_num++) {
+                        guess[c_num] = '0';
+                    }
+                }
+                // add 0s as padding, will be replaced by varyGuess
+                memcpy(c_point, guess_raw, len_guess);
+                guess[6] = '\0';
+                varyGuess(crack, pw_hashes, pw_size, n, curr_guess, guess);
+                // printf("Guess from less than equal 6: %s\n", guess);
+            }
+        } else if (len_guess > 6) {
+            // shift the word over, cutting diff bits off if longer than 6 chars
+            for (int k=0; k<len_guess-5; k++) {
+                memcpy(guess, &guess_raw[k], 6);
+                guess[6] = '\0';
+                varyGuess(crack, pw_hashes, pw_size, n, curr_guess, guess);
+            }
+        } else {
+            sprintf(guess, "%s", guess_raw);
+            varyGuess(crack, pw_hashes, pw_size, n, curr_guess, guess);
+        }
+    }
+}
+
 /* modifies the guess in numerous ways, comparing to hashes as it goes */
 void varyGuess(bool crack, BYTE pw_hashes[], size_t pw_size, int n, int *curr_guess, char* guess) {
     // try every valid character in place of the character that's already there
@@ -143,8 +205,12 @@ void varyGuess(bool crack, BYTE pw_hashes[], size_t pw_size, int n, int *curr_gu
             guess[i] = (char) new_c;
             if (new_c != (int) c_orig) {
                 count++;
-                pwEqualToListAt(guess, pw_hashes, pw_size);
-                // printf("%d: Guess: %s\n", count, guess);
+                if (*curr_guess < n) {
+                    printf("%s\n", guess);
+                    *curr_guess += 1;
+                } else if (n == -1 && crack) {
+                    pwEqualToListAt(guess, pw_hashes, pw_size);
+                }
             }
         }
         // put it back to original after all variations tried
@@ -251,7 +317,9 @@ void nDigitNums(bool crack, BYTE pw_hashes[], size_t pw_size, int n, int *curr_g
     }
 }
 
-// Two command line arguments, this is called.
+/* Two command line arguments, this is called. The guess file must
+* end with a newline
+*/
 void crackPasswordsFromFile(const char* guess_file, const char* hashed_file) {
     struct stat st;
     stat(hashed_file, &st);
