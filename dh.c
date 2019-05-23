@@ -3,6 +3,7 @@
 * of itself as "a"
 * Much of the pipe and exec code was sourced from: https://stackoverflow.com/a/6172578
 * Author: Kyle Zsembery
+* 
 */
 #include <fcntl.h>
 #include <netdb.h>
@@ -180,14 +181,15 @@ int first_byte() {
     {
       sprintf(command, "sha256 %s\n", DH_PATH);
       write(outpipefd[1], command, strlen(command));
-      sleep(4);
+      sleep(5);
       read(inpipefd[0], buf, 256);
       char* hash = strstr(buf, "=");
       hash += 2;
-      printf("Full hash: %s\n", hash);
-      printf("End hash\n");
-      char first_byte[2];
+      printf("Full hash:%s\n", hash);
+      char first_byte[3];
+	  first_byte[2] = '\0';
       strncpy(first_byte, hash, 2);
+	  printf("The first byte is: %s\n", first_byte);
       first_byte_int = (int)strtol(first_byte, NULL, 16);
     }
 
@@ -243,7 +245,7 @@ int calc_gbamodp(int gamodp, int first_byte_int) {
         // strcpy(msg, "2\n16^p\n9 % p\n");
         sprintf(msg, "%d\n%d ^ p\n%d %% p\n", gamodp, first_byte_int, P);
         write(outpipefd[1], msg, strlen(msg));
-        sleep(1);
+        sleep(5);
         memset(buf, '\0', 256);
         read(inpipefd[0], buf, 256);
         printf("The buf next line:\n%s\n", buf);
