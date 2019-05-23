@@ -3,7 +3,7 @@
 * of itself as "a"
 * Much of the pipe and exec code was sourced from: https://stackoverflow.com/a/6172578
 * Author: Kyle Zsembery
-* 
+*
 */
 #include <fcntl.h>
 #include <netdb.h>
