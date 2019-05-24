@@ -90,6 +90,9 @@ int main(int argc, char const *argv[]) {
         generatePasswords(false, n_guesses, NULL, 0);
     } else if(argc == 3) {
         crackPasswordsFromFile(argv[1], argv[2]);
+    } else {
+        fprintf(stderr, "Invalid args\n");
+        exit(EXIT_FAILURE);
     }
     return 0;
 }
@@ -134,7 +137,7 @@ void varyAlreadyGuessed(bool crack, BYTE pw_hashes[], size_t pw_size, int n,
     FILE *cracked_prev = fopen(CRACKED_PREV, "r");
     if (cracked_prev == NULL){
       fprintf(stderr, "Could not open file %s", CRACKED_PREV);
-      exit(1);
+      exit(EXIT_FAILURE);
     }
     // loop through guesses, comparing each to the hashes
     char guess[7];
@@ -154,7 +157,7 @@ void varyCommonPasswords(bool crack, BYTE pw_hashes[], size_t pw_size, int n,
     FILE *common_pws = fopen(COMMON_PWS, "r");
     if (common_pws == NULL){
       fprintf(stderr, "Could not open file %s", COMMON_PWS);
-      exit(1);
+      exit(EXIT_FAILURE);
     }
     // loop through guesses, comparing each to the hashes
     char guess_raw[MAX_GUESS_LEN];
@@ -355,7 +358,7 @@ void crackPasswordsFromFile(const char* guess_file, const char* hashed_file) {
     FILE *guesses_fp = fopen(guess_file, "r");
     if (guesses_fp == NULL){
       fprintf(stderr, "Could not open file %s", guess_file);
-      exit(1);
+      exit(EXIT_FAILURE);
     }
     // loop through guesses, comparing each to the hashes
     char guess_raw[MAX_GUESS_LEN];
@@ -442,7 +445,7 @@ void readFileIntoString(const char* file_loc, BYTE pw_hashes[], size_t size) {
 
     if (fptr == NULL) {
         fprintf(stderr, "Cannot open file \n");
-        exit(0);
+        exit(EXIT_FAILURE);
     }
 
     fread(pw_hashes, size, 1, fptr);
