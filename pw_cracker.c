@@ -32,6 +32,8 @@
 #define LOWER_START 97
 #define LOWER_END 123
 
+#define MAX_GUESS_LEN 10000
+
 #define LOG_EVERY_GUESS_AT 5000000
 
 void readFileIntoString(const char* file_loc, BYTE pw_hashes[], size_t size);
@@ -155,7 +157,7 @@ void varyCommonPasswords(bool crack, BYTE pw_hashes[], size_t pw_size, int n,
       exit(1);
     }
     // loop through guesses, comparing each to the hashes
-    char guess_raw[50];
+    char guess_raw[MAX_GUESS_LEN];
     while (fgets(guess_raw, sizeof(guess_raw), common_pws) != NULL) {
         if (strncmp(guess_raw, "\n", 1) == 0) {
             continue;
@@ -348,7 +350,6 @@ void crackPasswordsFromFile(const char* guess_file, const char* hashed_file) {
     struct stat st;
     stat(hashed_file, &st);
     long pw_size = st.st_size;
-    // int num_hashes_in_file = size / SHA256_BLOCK_SIZE;
     BYTE pw_hashes[pw_size];
     readFileIntoString(hashed_file, pw_hashes, pw_size);
     FILE *guesses_fp = fopen(guess_file, "r");
@@ -357,17 +358,19 @@ void crackPasswordsFromFile(const char* guess_file, const char* hashed_file) {
       exit(1);
     }
     // loop through guesses, comparing each to the hashes
-    char guess_raw[50];
-    while (fgets(guess_raw, 50, guesses_fp) != NULL) {
+    char guess_raw[MAX_GUESS_LEN];
+    while (fgets(guess_raw, MAX_GUESS_LEN, guesses_fp) != NULL) {
         int len_guess = strlen(guess_raw);
-        if (len_guess > CHAR_PWS_TESTED) {
+        if (guess_raw[len_guess-1] == '\n') {
             guess_raw[len_guess-1] = '\0';
-        } else if (len_guess == CHAR_PWS_TESTED) {
-            guess_raw[len_guess] = '\0';
         }
-        char guess[len_guess];
+        // will be length of guess without '\n'.
+        len_guess = strlen(guess_raw);
+        // keep space for null
+        char guess[len_guess+1];
         sprintf(guess, "%s", guess_raw);
         pwEqualToListAt(guess, pw_hashes, pw_size);
+        memset(guess_raw, '\0' ,MAX_GUESS_LEN);
     }
 }
 
